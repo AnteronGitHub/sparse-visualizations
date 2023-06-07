@@ -6,9 +6,9 @@ import os
 def parse_arguments():
     """Parses program arguments from environment variables.
     """
-    benchmark_files = os.environ.get("SPARSE_BENCHMARK_FILES")
+    benchmark_dir = os.environ.get("SPARSE_BENCHMARK_DIR")
 
-    return benchmark_files.split(",")
+    return [benchmark_dir + "/" + file for file in os.listdir(benchmark_dir)]
 
 def deserialize_sparse_benchmark_file_name(filepath):
     """Deserializes experiment metadata from file name based on sparse benchmark convention.
@@ -16,7 +16,7 @@ def deserialize_sparse_benchmark_file_name(filepath):
     filename = filepath.split("/")[-1]
     filename = filename.split(".")[0]
 
-    [application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time] = filename.split("-")
+    [application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time, benchmark_id] = filename.split("-")
 
     return application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time
 
@@ -53,7 +53,7 @@ def get_plot_color(suite, pruned):
         if pruned == "pruned":
             return "r"
         else:
-            return "r--"
+            return "y"
     else:
         return "g"
 
@@ -87,7 +87,7 @@ def plot_metric(filepaths, metric = "samples_processed"):
     plt.xlim(0)
     plt.ylim(0)
     plt.title(f"{model}/{dataset}, {training_specs}, {title_additional_data}")
-    plt.legend(loc='lower right')
+    #plt.legend(loc='lower right')
 
     plt.savefig(f"{application}-{metric}-{date}.svg", dpi=400)
 #    plt.show()
