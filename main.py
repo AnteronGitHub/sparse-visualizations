@@ -6,7 +6,7 @@ import os
 def parse_arguments():
     """Parses program arguments from environment variables.
     """
-    benchmark_files = os.environ.get("SPARSE_BENCHMARK_FILE")
+    benchmark_files = os.environ.get("SPARSE_BENCHMARK_FILES")
 
     return benchmark_files.split("|")
 
