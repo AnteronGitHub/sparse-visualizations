@@ -64,6 +64,7 @@ def plot_metric(filepaths, metric = "samples_processed"):
 
     title_additional_data = None
     title_additional_data_locked = False
+    plotted_labels = []
     for filepath in filepaths:
         application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time = deserialize_sparse_benchmark_file_name(filepath)
 
@@ -78,7 +79,12 @@ def plot_metric(filepaths, metric = "samples_processed"):
             ys = np.array(df[df.columns[1]]/1000.0/1000.0)
         else:
             ys = np.array(df[df.columns[1]])
-        plt.plot(xs, ys, get_plot_color(suite, pruned), label=f"{suite} {pruned} {time}")
+        label = f"{suite} {pruned}"
+        if label in plotted_labels:
+            plt.plot(xs, ys, get_plot_color(suite, pruned))
+        else:
+            plt.plot(xs, ys, get_plot_color(suite, pruned), label=label)
+            plotted_labels.append(label)
 
     training_specs = format_training_specs(training_specs)
     metric_label = format_metric_label(metric)
@@ -87,7 +93,7 @@ def plot_metric(filepaths, metric = "samples_processed"):
     plt.xlim(0)
     plt.ylim(0)
     plt.title(f"{model}/{dataset}, {training_specs}, {title_additional_data}")
-    #plt.legend(loc='lower right')
+    plt.legend(loc='lower right')
 
     plt.savefig(f"{application}-{metric}-{date}.svg", dpi=400)
 #    plt.show()
