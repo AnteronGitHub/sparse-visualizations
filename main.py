@@ -67,6 +67,9 @@ def plot_metric(filepaths, metric = "samples_processed"):
     plotted_labels = []
     for filepath in filepaths:
         application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time = deserialize_sparse_benchmark_file_name(filepath)
+        label = f"{suite} {pruned}"
+        if metric == "bytes_sent" and label in plotted_labels:
+            continue    # Only one plot per suite, since they tend to use the same physical network interface.
 
         if not title_additional_data_locked:
             title_additional_data = format_additional_data(pruned, additional_data)
@@ -79,7 +82,6 @@ def plot_metric(filepaths, metric = "samples_processed"):
             ys = np.array(df[df.columns[1]]/1000.0/1000.0)
         else:
             ys = np.array(df[df.columns[1]])
-        label = f"{suite} {pruned}"
         if label in plotted_labels:
             plt.plot(xs, ys, get_plot_color(suite, pruned))
         else:
