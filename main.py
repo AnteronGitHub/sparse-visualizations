@@ -44,7 +44,7 @@ def format_additional_data(pruned, additional_data):
 
 def format_metric_label(metric):
     if metric == "bytes_sent":
-        return "Bytes sent (GB)"
+        return "Bytes sent (MB)"
     else:
         return metric.replace("_", " ")
 
@@ -59,6 +59,26 @@ def get_plot_color(suite, pruned):
     else:
         return "g"
 
+def preprocess_results(df, metric):
+    if metric != "samples_processed":
+        return df
+
+    # Linearly interpolate plot by dropping rows that do not increase the samples processed
+    samples_processed = None
+    res_rows = []
+    for index, row in df.iterrows():
+        if samples_processed is None or samples_processed != row['samples_processed']:
+            samples_processed = row['samples_processed']
+            res_rows.append(row)
+
+    return pd.DataFrame(res_rows, columns=df.columns)
+
+def get_plot_linewidth(metric):
+    if metric == "samples_processed":
+        return .7
+
+    return 1.5
+
 def plot_metric(filepaths, metric = "samples_processed"):
     """Plots samples processed column.
     """
@@ -70,6 +90,7 @@ def plot_metric(filepaths, metric = "samples_processed"):
     for filepath in filepaths:
         application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time = deserialize_sparse_benchmark_file_name(filepath)
         label = f"{suite} {pruned}"
+        linewidth = get_plot_linewidth(metric)
         if metric == "bytes_sent" and label in plotted_labels:
             continue    # Only one plot per suite, since they tend to use the same physical network interface.
 
@@ -79,15 +100,16 @@ def plot_metric(filepaths, metric = "samples_processed"):
                 title_additional_data_locked = True
 
         df = pd.read_csv(filepath, usecols=["timestamp", metric])
+        df = preprocess_results(df, metric)
         xs = np.array(df[df.columns[0]]/60.0)
         if metric == "bytes_sent":
             ys = np.array(df[df.columns[1]]/1000.0/1000.0)
         else:
             ys = np.array(df[df.columns[1]])
         if label in plotted_labels:
-            plt.plot(xs, ys, get_plot_color(suite, pruned))
+            plt.plot(xs, ys, get_plot_color(suite, pruned), linewidth=linewidth)
         else:
-            plt.plot(xs, ys, get_plot_color(suite, pruned), label=label)
+            plt.plot(xs, ys, get_plot_color(suite, pruned), label=label, linewidth=linewidth)
             plotted_labels.append(label)
 
     training_specs = format_training_specs(training_specs)
@@ -99,7 +121,7 @@ def plot_metric(filepaths, metric = "samples_processed"):
     plt.title(f"{model}/{dataset}, {training_specs}, {title_additional_data}")
     plt.legend(loc='lower right')
 
-    plt.savefig(f"{application}-{metric}-{date}.svg", dpi=400)
+    plt.savefig(f"{application}-{metric}-{date}.png", dpi=400)
 #    plt.show()
 
 if __name__ == "__main__":
