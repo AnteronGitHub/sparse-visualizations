@@ -2,13 +2,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import pathlib
 
 def parse_arguments():
     """Parses program arguments from environment variables.
     """
     benchmark_dir = os.environ.get("SPARSE_BENCHMARK_DIR")
+    result_files = filter(lambda file: pathlib.Path(file).suffix == ".csv", os.listdir(benchmark_dir))
 
-    return [benchmark_dir + "/" + file for file in os.listdir(benchmark_dir)]
+    return [benchmark_dir + "/" + file for file in result_files]
 
 def deserialize_sparse_benchmark_file_name(filepath):
     """Deserializes experiment metadata from file name based on sparse benchmark convention.
