@@ -82,14 +82,15 @@ def get_plot_linewidth(metric):
 def plot_metric(filepaths, metric = "samples_processed"):
     """Plots samples processed column.
     """
-    plt.figure(figsize=(16,12))
+    plt.figure(figsize=(8,6))
+    plt.rcParams.update({'font.size': 16})
 
     title_additional_data = None
     title_additional_data_locked = False
     plotted_labels = []
     for filepath in filepaths:
         application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time = deserialize_sparse_benchmark_file_name(filepath)
-        label = f"{suite} {pruned}"
+        label = f"{pruned}"
         linewidth = get_plot_linewidth(metric)
         if metric == "bytes_sent" and label in plotted_labels:
             continue    # Only one plot per suite, since they tend to use the same physical network interface.
@@ -118,7 +119,7 @@ def plot_metric(filepaths, metric = "samples_processed"):
     plt.ylabel(metric_label)
     plt.xlim(0)
     plt.ylim(0)
-    plt.title(f"{model}/{dataset}, {training_specs}, {title_additional_data}")
+    #plt.title(f"{model}/{dataset}, {training_specs}, {title_additional_data}")
     plt.legend(loc='lower right')
 
     plt.savefig(f"{application}-{metric}-{date}.png", dpi=400)
