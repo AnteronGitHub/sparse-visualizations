@@ -90,7 +90,7 @@ def plot_metric(filepaths, metric = "samples_processed"):
     plotted_labels = []
     for filepath in filepaths:
         application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time = deserialize_sparse_benchmark_file_name(filepath)
-        label = f"{pruned}"
+        label = "with module" if pruned == "pruned" else "without module"
         linewidth = get_plot_linewidth(metric)
         if metric == "bytes_sent" and label in plotted_labels:
             continue    # Only one plot per suite, since they tend to use the same physical network interface.
