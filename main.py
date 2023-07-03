@@ -18,16 +18,16 @@ def deserialize_sparse_benchmark_file_name(filepath):
     filename = filepath.split("/")[-1]
     filename = filename.split(".")[0]
 
-    [application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time, benchmark_id] = filename.split("-")
+    [example, application, suite, node, model, dataset, batch_specs, additional_data, date, time, benchmark_id] = filename.split("-")
 
-    return application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time
+    return example, application, suite, node, model, dataset, batch_specs, additional_data, date, time, benchmark_id
 
-def format_training_specs(training_specs):
-    [batch_size, batches] = training_specs.split("_")
+def format_batch_specs(batch_specs):
+    [batch_size, batches] = batch_specs.split("_")
     return f"{batch_size} batch size, {batches} batches"
 
-def format_additional_data(pruned, additional_data):
-    if pruned == "unpruned":
+def format_additional_data(example, additional_data):
+    if example == "splitnn":
         return f"{additional_data} epochs"
 
     deprunePhases = ""
@@ -48,11 +48,11 @@ def format_metric_label(metric):
     else:
         return metric.replace("_", " ")
 
-def get_plot_color(suite, pruned):
+def get_plot_color(suite, example):
     if suite == "edge_offloading":
         return "b"
     elif suite == "edge_split":
-        if pruned == "pruned":
+        if example == "deprune":
             return "r"
         else:
             return "y"
@@ -88,15 +88,15 @@ def plot_metric(filepaths, metric = "samples_processed"):
     title_additional_data_locked = False
     plotted_labels = []
     for filepath in filepaths:
-        application, suite, pruned, node, model, dataset, training_specs, additional_data, date, time = deserialize_sparse_benchmark_file_name(filepath)
-        label = f"{suite} {pruned}"
+        example, application, suite, node, model, dataset, batch_specs, additional_data, date, time, benchmark_id = deserialize_sparse_benchmark_file_name(filepath)
+        label = f"{example} {suite}"
         linewidth = get_plot_linewidth(metric)
         if metric == "bytes_sent" and label in plotted_labels:
             continue    # Only one plot per suite, since they tend to use the same physical network interface.
 
         if not title_additional_data_locked:
-            title_additional_data = format_additional_data(pruned, additional_data)
-            if pruned == "pruned":
+            title_additional_data = format_additional_data(example, additional_data)
+            if example == "deprune":
                 title_additional_data_locked = True
 
         df = pd.read_csv(filepath, usecols=["timestamp", metric])
@@ -107,18 +107,18 @@ def plot_metric(filepaths, metric = "samples_processed"):
         else:
             ys = np.array(df[df.columns[1]])
         if label in plotted_labels:
-            plt.plot(xs, ys, get_plot_color(suite, pruned), linewidth=linewidth)
+            plt.plot(xs, ys, get_plot_color(suite, example), linewidth=linewidth)
         else:
-            plt.plot(xs, ys, get_plot_color(suite, pruned), label=label, linewidth=linewidth)
+            plt.plot(xs, ys, get_plot_color(suite, example), label=label, linewidth=linewidth)
             plotted_labels.append(label)
 
-    training_specs = format_training_specs(training_specs)
+    batch_specs = format_batch_specs(batch_specs)
     metric_label = format_metric_label(metric)
     plt.xlabel('Time (min)')
     plt.ylabel(metric_label)
     plt.xlim(0)
     plt.ylim(0)
-    plt.title(f"{model}/{dataset}, {training_specs}, {title_additional_data}")
+    plt.title(f"{model}/{dataset}, {batch_specs}, {title_additional_data}")
     plt.legend(loc='lower right')
 
     plt.savefig(f"{application}-{metric}-{date}.png", dpi=400)
