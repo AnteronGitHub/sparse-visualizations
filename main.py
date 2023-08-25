@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 import pathlib
+import seaborn as sns
 
 def parse_arguments():
     """Parses program arguments from environment variables.
@@ -124,7 +125,38 @@ def plot_metric(filepaths, metric = "samples_processed"):
     plt.savefig(f"{application}-{metric}-{date}.png", dpi=400)
 #    plt.show()
 
+def plot_boxplot():
+    plt.figure(figsize=(8,4))
+
+    df_fcfs = pd.read_csv('data/batching-experiments-1-datasources/splitnn-learning-edge_offloading-datasource0-VGG-CIFAR10-1_128-1-tasks-20230825-121444-ceb2336e_052e_4bf4_a84e_0c79133f2af2.csv', usecols=["processing_time"])
+    df_batching = pd.read_csv('data/batching-experiments-1-datasources/splitnn-learning-edge_offloading-datasource0-VGG-CIFAR10-256_128-1-tasks-20230825-122505-271b3dc6_966b_4667_85ae_2183d9e63332.csv')
+
+    result_dir = 'data/batching-experiments-32-datasources_fcfs'
+    df_fcfs_32 = pd.concat([pd.read_csv(f"{result_dir}/{file}") for file in os.listdir(result_dir)])
+
+    result_dir = 'data/batching-experiments-32-datasources_batched'
+    df_batching_32 = pd.concat([pd.read_csv(f"{result_dir}/{file}") for file in os.listdir(result_dir)])
+
+    result_dir = 'data/batching-experiments-256-datasources_fcfs'
+    df_fcfs_256 = pd.concat([pd.read_csv(f"{result_dir}/{file}") for file in os.listdir(result_dir)])
+
+    result_dir = 'data/batching-experiments-256-datasources_batched'
+    df_batching_256 = pd.concat([pd.read_csv(f"{result_dir}/{file}") for file in os.listdir(result_dir)])
+
+    df_fcfs = df_fcfs.assign(no_datasources=1, policy='FCFS')
+    df_batching = df_batching.assign(no_datasources=1, policy='batching')
+    df_fcfs_32 = df_fcfs_32.assign(no_datasources=32, policy='FCFS')
+    df_batching_32 = df_batching_32.assign(no_datasources=32, policy='batching')
+    df_fcfs_256 = df_fcfs_256.assign(no_datasources=256, policy='FCFS')
+    df_batching_256 = df_batching_256.assign(no_datasources=256, policy='batching')
+
+    df = pd.concat([df_fcfs, df_batching, df_fcfs_32, df_batching_32, df_fcfs_256, df_batching_256])
+    ax = sns.boxplot(x="no_datasources", y="processing_time", hue="policy", data=df, color="grey")
+
+    plt.savefig(f"batching_experiments_20230825.png", dpi=400)
+
 if __name__ == "__main__":
     benchmark_files = parse_arguments()
-    plot_metric(benchmark_files)
-    plot_metric(benchmark_files, metric="bytes_sent")
+    plot_boxplot()
+    #plot_metric(benchmark_files)
+    #plot_metric(benchmark_files, metric="bytes_sent")
